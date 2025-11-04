@@ -1,62 +1,326 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wordle</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mini Wordle</title>
+<style>
+  :root{
+    --bg:#0f1720; --panel:#0b1220; --tile:#12202b;
+    --text:#e6eef6; --muted:#9fb2c9;
+    --absent:#3a4b57; --present:#b59f3b; --correct:#538d4e;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%; margin:0; background:linear-gradient(180deg,var(--bg),#081018); color:var(--text); display:flex; align-items:center; justify-content:center;}
+  .app{width:420px; max-width:96vw; padding:28px; background:linear-gradient(180deg,var(--panel),#071018); border-radius:14px; box-shadow:0 10px 30px rgba(2,8,15,.6);}
+  h1{margin:0 0 18px; font-weight:600; letter-spacing:1px; font-size:20px; color:var(--text);}
+  .grid{display:grid; grid-template-rows:repeat(6,1fr); gap:8px; margin-bottom:18px;}
+  .row{display:grid; grid-template-columns:repeat(5,1fr); gap:8px;}
+  .tile{aspect-ratio:1/1; background:var(--tile); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:22px; color:var(--text); text-transform:uppercase; user-select:none; box-shadow: inset 0 -4px 0 rgba(0,0,0,.2);}
+  .tile.filled{border:2px solid rgba(255,255,255,.02);}
+  .keyboard{display:grid; gap:8px; justify-items:center;}
+  .kb-row{display:flex; gap:6px; justify-content:center; margin-top:6px;}
+  .key{padding:10px 12px; border-radius:6px; background:#0f2530; min-width: 36px; text-align:center; cursor:pointer; user-select:none; font-weight:700; text-transform:uppercase; color:var(--text);}
+  .key.wide{min-width:64px; padding-left:14px; padding-right:14px;}
+  .key.disabled{opacity:.6; pointer-events:none;}
+  .key.absent{background:var(--absent);}
+  .key.present{background:var(--present); color:#111;}
+  .key.correct{background:var(--correct); color:#081012;}
+  .controls{display:flex; justify-content:space-between; align-items:center; gap:8px;}
+  button{background:#0f3b52; border:0; padding:8px 12px; color:var(--text); border-radius:8px; cursor:pointer; font-weight:700;}
+  .muted{color:var(--muted); font-size:13px;}
+  .toast{position:fixed; left:50%; transform:translateX(-50%); bottom:28px; background:rgba(0,0,0,.6); padding:10px 14px; border-radius:10px; color:var(--text); font-weight:600;}
+  .flip{animation:flip 700ms ease both;}
+  @keyframes flip {
+    0% { transform: rotateX(0); }
+    50% { transform: rotateX(90deg); opacity: .6; }
+    100% { transform: rotateX(0); opacity: 1; }
+  }
+  footer{margin-top:10px; font-size:12px; text-align:center; color:var(--muted);}
+</style>
 </head>
-
 <body>
-    <h1> Wordle Clone </h1>
+<div class="app" role="application" aria-label="Mini Wordle">
+  <h1>Mini Wordle</h1>
 
-    <div id="game-board">
+  <div id="grid" class="grid" aria-live="polite"></div>
 
+  <div class="keyboard" id="keyboard" aria-hidden="false">
+    <div class="kb-row" id="row1"></div>
+    <div class="kb-row" id="row2"></div>
+    <div class="kb-row" id="row3"></div>
+  </div>
+
+  <div style="height:10px"></div>
+
+  <div class="controls">
+    <div class="muted" id="status">Guess the 5-letter word — 6 guesses</div>
+    <div style="display:flex; gap:8px">
+      <button id="newBtn">New</button>
+      <button id="shareBtn">Share</button>
     </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script src="script.js" type="module"></script>
-</body>
-<div id="keyboard-cont">
-    <div class="first-row">
-        <button class="keyboard-button">q</button>
-        <button class="keyboard-button">w</button>
-        <button class="keyboard-button">e</button>
-        <button class="keyboard-button">r</button>
-        <button class="keyboard-button">t</button>
-        <button class="keyboard-button">y</button>
-        <button class="keyboard-button">u</button>
-        <button class="keyboard-button">i</button>
-        <button class="keyboard-button">o</button>
-        <button class="keyboard-button">p</button>
-    </div>
-    <div class="second-row">
-        <button class="keyboard-button">a</button>
-        <button class="keyboard-button">s</button>
-        <button class="keyboard-button">d</button>
-        <button class="keyboard-button">f</button>
-        <button class="keyboard-button">g</button>
-        <button class="keyboard-button">h</button>
-        <button class="keyboard-button">j</button>
-        <button class="keyboard-button">k</button>
-        <button class="keyboard-button">l</button>
-    </div>
-    <div class="third-row">
-        <button class="keyboard-button">Del</button>
-        <button class="keyboard-button">z</button>
-        <button class="keyboard-button">x</button>
-        <button class="keyboard-button">c</button>
-        <button class="keyboard-button">v</button>
-        <button class="keyboard-button">b</button>
-        <button class="keyboard-button">n</button>
-        <button class="keyboard-button">m</button>
-        <button class="keyboard-button">Enter</button>
-    </div>
+  </div>
+
+  <footer>Built for you • Press Enter to submit, Backspace to delete</footer>
 </div>
 
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+(function(){
+
+/* --- Small word list (valid guesses + answers). Expand as desired --- */
+const WORDS = [
+"apple","baker","candy","delta","eagle","flame","grace","hound","index","joker",
+"knife","linen","mango","noble","ocean","paint","quilt","ruler","shine","tango",
+"unity","vivid","whale","xenon","yield","zebra","about","other","which","their",
+"there","first","could","water","sound","great","small","music","heart","light",
+"rapid","angry","quiet","pound","house","plant","stone","smile","trace","blend"
+];
+/* We'll pick the target from the same list, and treat the list as valid guesses too. */
+
+/* --- UI building --- */
+const gridEl = document.getElementById('grid');
+const keyboardEl = document.getElementById('keyboard');
+const toastEl = document.getElementById('toast');
+const statusEl = document.getElementById('status');
+const shareBtn = document.getElementById('shareBtn');
+const newBtn = document.getElementById('newBtn');
+
+let target = '';
+let row = 0, col = 0;
+const maxRows = 6, wordLen = 5;
+let board = Array.from({length:maxRows}, ()=>Array(wordLen).fill(''));
+let states = Array.from({length:maxRows}, ()=>Array(wordLen).fill('')); // "", absent, present, correct
+let gameOver = false;
+let guesses = [];
+
+/* Build grid */
+function buildGrid(){
+  gridEl.innerHTML = '';
+  for(let r=0;r<maxRows;r++){
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'row';
+    rowDiv.setAttribute('data-row', r);
+    for(let c=0;c<wordLen;c++){
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.id = `tile-${r}-${c}`;
+      tile.setAttribute('aria-label', '');
+      rowDiv.appendChild(tile);
+    }
+    gridEl.appendChild(rowDiv);
+  }
+}
+
+/* Build keyboard */
+const keys1 = "QWERTYUIOP".split('');
+const keys2 = "ASDFGHJKL".split('');
+const keys3 = ["Enter","Z","X","C","V","B","N","M","Backspace"];
+
+function buildKeyboard(){
+  document.getElementById('row1').innerHTML = keys1.map(k=>`<div class="key" data-key="${k}">${k}</div>`).join('');
+  document.getElementById('row2').innerHTML = keys2.map(k=>`<div class="key" data-key="${k}">${k}</div>`).join('');
+  document.getElementById('row3').innerHTML = keys3.map(k=>`<div class="key ${k.length>1?'wide':''}" data-key="${k}">${k==='Backspace'?'⌫':k}</div>`).join('');
+}
+
+/* Helpers */
+function showToast(msg, time=1400){
+  toastEl.innerText = msg; toastEl.style.display='block';
+  clearTimeout(toastEl._t); toastEl._t=setTimeout(()=>toastEl.style.display='none', time);
+}
+
+function pickNew(){
+  target = WORDS[Math.floor(Math.random()*WORDS.length)].toUpperCase();
+  row = 0; col = 0; board = Array.from({length:maxRows}, ()=>Array(wordLen).fill(''));
+  states = Array.from({length:maxRows}, ()=>Array(wordLen).fill(''));
+  gameOver = false; guesses = [];
+  updateGrid();
+  resetKeyboardColors();
+  statusEl.textContent = 'Guess the 5-letter word — 6 guesses';
+  // console.log('target', target); // uncomment for debugging
+}
+
+/* Update grid UI */
+function updateGrid(){
+  for(let r=0;r<maxRows;r++){
+    for(let c=0;c<wordLen;c++){
+      const tile = document.getElementById(`tile-${r}-${c}`);
+      tile.className = 'tile';
+      tile.innerText = board[r][c] || '';
+      if(board[r][c]) tile.classList.add('filled');
+      const st = states[r][c];
+      if(st){
+        tile.classList.add(st);
+        tile.style.background = ''; // reset inline if any
+      } else {
+        tile.style.background = '';
+      }
+    }
+  }
+}
+
+/* Key coloring */
+function setKeyState(letter, state){
+  letter = letter.toUpperCase();
+  const keyEl = keyboardEl.querySelector(`[data-key="${letter}"]`);
+  if(!keyEl) return;
+  // priority: correct > present > absent
+  if(keyEl.classList.contains('correct')) return;
+  if(keyEl.classList.contains('present') && state==='absent') return;
+  keyEl.classList.remove('absent','present','correct');
+  keyEl.classList.add(state);
+}
+
+function resetKeyboardColors(){
+  const keys = keyboardEl.querySelectorAll('.key');
+  keys.forEach(k=>{ k.classList.remove('absent','present','correct'); });
+}
+
+/* Submit guess */
+function submitGuess(){
+  if(gameOver) return;
+  if(col < wordLen){ showToast('Not enough letters'); return; }
+  const guess = board[row].join('').toLowerCase();
+  if(!WORDS.includes(guess)){
+    showToast('Not in word list');
+    return;
+  }
+  // Evaluate with proper duplicate handling
+  const targetArr = target.split('');
+  const guessArr = guess.toUpperCase().split('');
+  const res = Array(wordLen).fill('absent');
+  const targetCounts = {};
+  for(let i=0;i<targetArr.length;i++){
+    const ch = targetArr[i];
+    targetCounts[ch] = (targetCounts[ch]||0) + 1;
+  }
+  // First pass: correct
+  for(let i=0;i<wordLen;i++){
+    if(guessArr[i] === targetArr[i]){
+      res[i] = 'correct';
+      targetCounts[guessArr[i]]--;
+    }
+  }
+  // Second pass: present if still available
+  for(let i=0;i<wordLen;i++){
+    if(res[i] === 'correct') continue;
+    const ch = guessArr[i];
+    if(targetCounts[ch] > 0){
+      res[i] = 'present';
+      targetCounts[ch]--;
+    }
+  }
+  // Apply result with animation
+  for(let c=0;c<wordLen;c++){
+    states[row][c] = res[c];
+  }
+  flipRow(row, guessArr, res);
+
+  guesses.push({word: guess.toUpperCase(), res});
+  if(guess.toUpperCase() === target){
+    gameOver = true;
+    statusEl.textContent = `You win! The word was ${target}.`;
+    showToast('Nice! You got it 🎉', 3000);
+  } else if(row === maxRows-1){
+    gameOver = true;
+    statusEl.textContent = `Game over — the word was ${target}.`;
+    showToast(`Game over — word was ${target}`);
+  } else {
+    row++; col = 0;
+  }
+}
+
+/* Flip animation & update keyboard colors */
+function flipRow(r, guessArr, res){
+  for(let c=0;c<wordLen;c++){
+    const tile = document.getElementById(`tile-${r}-${c}`);
+    setTimeout(((tile, ch, state)=>{
+      return ()=>{
+        tile.classList.add('flip');
+        tile.classList.add(state);
+        setKeyState(ch, state);
+      };
+    })(tile, guessArr[c], res[c]), c*220);
+    // remove flip class after animation to allow re-flip if needed
+    setTimeout((function(tile){ return ()=>tile.classList.remove('flip'); })(tile), 700 + c*220);
+  }
+  // update grid after short delay to show letters
+  setTimeout(updateGrid, 30);
+}
+
+/* Key handling */
+function onKeyPress(key){
+  if(gameOver) return;
+  key = key.toUpperCase();
+  if(key === 'ENTER'){
+    submitGuess(); return;
+  }
+  if(key === 'BACKSPACE' || key === '⌫'){
+    if(col === 0) return;
+    col--; board[row][col] = '';
+    updateGrid(); return;
+  }
+  if(!/^[A-Z]$/.test(key)) return;
+  if(col < wordLen){
+    board[row][col] = key;
+    col++;
+    updateGrid();
+  }
+}
+
+/* physical keyboard */
+window.addEventListener('keydown', e=>{
+  if(e.key === 'Enter') onKeyPress('Enter');
+  else if(e.key === 'Backspace') onKeyPress('Backspace');
+  else {
+    const k = e.key.length === 1 ? e.key.toUpperCase() : '';
+    if(/^[A-Z]$/.test(k)) onKeyPress(k);
+  }
+});
+
+/* on-screen keyboard clicks */
+keyboardEl.addEventListener('click', e=>{
+  const key = e.target.closest('.key');
+  if(!key) return;
+  const k = key.dataset.key;
+  onKeyPress(k);
+});
+
+/* Share as emoji grid */
+function makeShareText(){
+  const lines = guesses.map(g=>{
+    return g.res.map(s=> s==='correct' ? '🟩' : s==='present' ? '🟨' : '⬛').join('');
+  });
+  const header = `Mini Wordle — ${guesses.length>0 ? guesses.length : 'X'}/${maxRows}`;
+  return `${header}\n${lines.join('\n')}`;
+}
+
+/* Share button */
+shareBtn.addEventListener('click', async ()=>{
+  if(guesses.length===0){ showToast('No guesses yet'); return; }
+  const txt = makeShareText();
+  try{
+    await navigator.clipboard.writeText(txt);
+    showToast('Result copied to clipboard');
+  }catch(e){
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); showToast('Result copied'); } catch(_) { showToast('Copy failed'); }
+    ta.remove();
+  }
+});
+
+/* New game */
+newBtn.addEventListener('click', ()=>{ pickNew(); });
+
+/* Init */
+buildGrid();
+buildKeyboard();
+pickNew();
+
+})();
+</script>
+</body>
 </html>
